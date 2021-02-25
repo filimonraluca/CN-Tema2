@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 def read_data_from_file(file):
@@ -29,7 +30,7 @@ def cholesky_decomposition(a, n):
                 for k in range(j):
                     s += a[i][k] * a[j][k]
                 a[i][j] = (a[i][j] - s) / a[j][j]
-    print(a)
+    print("Descompunere Cholesky: ", a)
 
 
 def determinant(a):
@@ -45,9 +46,9 @@ def determinant(a):
 
 def forward_substitution(L, b):
     """
-    Forward substiution method solves the equation Ly=b, where L is a lower triangular matrix
+    Forward substiution method solves the system Ly=b, where L is a lower triangular matrix
     :param L: matrice inferior triunghiulara din descompunerea lui A
-    :param b: factorul drept al ecuatiei Ax=b/Ly=b
+    :param b: factorul drept al sistemului Ax=b/Ly=b
     """
     y = [0 for _ in range(len(b))]
     y[0] = b[0] / L[0][0]
@@ -61,9 +62,9 @@ def forward_substitution(L, b):
 
 def backward_substitution(L, y):
     """
-    Backward substiution method solves the equation LTx=y, where LT is a upper triangular matrix (L transpose)
+    Backward substiution method solves the system LTx=y, where LT is a upper triangular matrix (L transpose)
     :param L: matrice inferior triunghiulara din descompunerea lui A
-    :param y: valorea calculata la forward_substitution rezolvand ecuatia Ly=b
+    :param y: valorea calculata la forward_substitution rezolvand sistemului Ly=b
     """
     n = len(y)
     x = [0 for _ in range(n)]
@@ -86,9 +87,9 @@ def solve_eq(a, b):
 def norm(a, x, d, b):
     """
     :param a: matricea initiala simetrica si pozitiv definita, modificata ulterior in descompunerea Cholesky
-    :param x: solutia ecuatiei Ax=b calculata de noi
+    :param x: solutia sistemului Ax=b calculata de noi
     :param d: diagonala principala din matricea initiala
-    :param b: membru drept din ecuatia Ax=b
+    :param b: membru drept din sistemului Ax=b
     :return: norma euclidiana pentru |Ax-b|
     """
     n = len(a)
@@ -109,10 +110,17 @@ def norm(a, x, d, b):
 
 if __name__ == '__main__':
     n, epsilon, a, b = read_data_from_file("data.txt")
+    a_np = np.array(a)
     d = [a[i][i] for i in range(n)]  # diagonala initiala
     cholesky_decomposition(a, n)
-    print("determinant A: ", determinant(a))
-    b = [16, 27, 41]
+    print("Determinant A: ", determinant(a))
+    # b = [16, 27, 41]
+    b_np = np.array(b)
     x = solve_eq(a, b)
-    print("Solutia ecuatiei Ax=b: ", x)
+    print("Solutia sistemului Ax=b: ", x)
     print("Norma euclidiana:", norm(a, x, d, b))
+
+    L_np = np.linalg.cholesky(a_np)
+    print("Descompunere Cholesky numpy:\n", L_np)
+    x_np = np.linalg.solve(a_np, b_np)
+    print("Solutia sistemului Ax=b calculat de numpy: ", x_np)
