@@ -108,6 +108,19 @@ def norm(a, x, d, b):
     return math.sqrt(z)
 
 
+def inverse_matrix(a):
+    n = len(a)
+    a_inverse = [[0 for _ in range(n)] for _ in range(n)]
+    for j in range(n):
+        b = [0 for _ in range(n)]
+        b[j] = 1
+        y = forward_substitution(a, b)
+        x = backward_substitution(a, y)
+        for i in range(n):
+            a_inverse[i][j] = x[i]
+    return a_inverse
+
+
 if __name__ == '__main__':
     n, epsilon, a, b = read_data_from_file("data.txt")
     a_np = np.array(a)
@@ -124,3 +137,9 @@ if __name__ == '__main__':
     print("Descompunere Cholesky numpy:\n", L_np)
     x_np = np.linalg.solve(a_np, b_np)
     print("Solutia sistemului Ax=b calculat de numpy: ", x_np)
+
+    a_inverse = inverse_matrix(a)
+    a_inverse_np = np.linalg.inv(a_np)
+    print("Inversa matricei A:", a_inverse)
+    print("Inversa matricei A cu numpy:\n", a_inverse_np)
+    print(np.linalg.norm(a_inverse - a_inverse_np, ord="fro"))
