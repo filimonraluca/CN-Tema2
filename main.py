@@ -1,11 +1,16 @@
 import math
+import os
+
 import numpy as np
 import random
 
+global from_file, in_file, generate, read_file, write_file
 
-def read_data_from_file(file):
+
+def read_data_from_file():
+    global read_file
     try:
-        f = open(file, "r")
+        f = open(read_file, "r")
         n = int(f.readline())
         epsilon = pow(10, -int(f.readline()))
         a = []
@@ -39,7 +44,58 @@ def read_data_from_console():
     return n, epsilon, a, b
 
 
+def write_matrix_in_file(a, n, text):
+    global write_file
+    try:
+        f = open(write_file, "a")
+        f.write(text + '\n')
+        for i in range(n):
+            for j in range(n):
+                f.write(str(a[i][j]) + " ")
+            f.write('\n')
+        f.close()
+    except OSError:
+        print("Error while writing data!")
+
+
+def write_array_in_file(b, n, text):
+    global write_file
+    try:
+        f = open(write_file, "a")
+        f.write(text + '\n')
+        for i in range(n):
+            f.write(str(b[i]) + " ")
+        f.write('\n')
+        f.close()
+    except OSError:
+        print("Error while writing data!")
+
+
+def write_value_in_file(x, text):
+    global write_file
+    try:
+        f = open(write_file, "a")
+        f.write(text + str(x) + '\n')
+        f.close()
+    except OSError:
+        print("Error while writing data!")
+
+
+def write_matrix_in_console(a, n):
+    for i in range(n):
+        for j in range(n):
+            print(a[i][j], end=" ")
+        print()
+
+
+def write_array_in_console(b, n):
+    for i in range(n):
+        print(b[i], end=" ")
+    print()
+
+
 def generate_random_matrix():
+    global in_file
     n = random.randint(10, 100)
     epsilon = pow(10, -random.randint(10, 20))
     a = [[0 for _ in range(n)] for _ in range(n)]
@@ -53,21 +109,23 @@ def generate_random_matrix():
             s[i] += abs(a[i][j])
         a[i][i] = s[i] + random.uniform(epsilon, 10);
     b = [random.uniform(1, 1000) for _ in range(n)]
-    for i in range(n):
-        for j in range(n):
-            print(a[i][j], end=" ")
-        print()
+    if in_file:
+        write_matrix_in_file(a, n, "Matricea A generata:")
+        write_array_in_file(b, n, "Vectorul termenilor liberi:")
+    else:
+        write_matrix_in_console(a, n)
+        write_array_in_console(b, n)
     return n, epsilon, a, b
 
 
 def cholesky_decomposition(a, n, epsilon):
+    global in_file
     for i in range(n):
         for j in range(0, i + 1):
             if i == j:
                 s = 0
                 for k in range(i):
                     s += a[i][k] ** 2
-                print(a[i][j], s)
                 if a[i][j] - s > 0:
                     a[i][j] = math.sqrt(a[i][j] - s)
                 else:
@@ -82,7 +140,11 @@ def cholesky_decomposition(a, n, epsilon):
                 else:
                     print("nu se poate face impartirea")
                     exit(0)
-    print("Descompunere Cholesky: ", a)
+    if in_file:
+        write_matrix_in_file(a, n, "Descompunere Cholesky: ")
+    else:
+        print("Descompunere Cholesky: ")
+        write_matrix_in_console(a, n)
 
 
 def determinant(a):
@@ -138,9 +200,17 @@ def backward_substitution(L, y, epsilon):
 
 
 def solve_eq(a, b, epsilon):
+    global in_file
     y = forward_substitution(a, b, epsilon)
-    print("Solutia ecuatiei Ly=b:", y)
     x = backward_substitution(a, y, epsilon)
+    if in_file:
+        write_array_in_file(y, n, "Solutia ecuatiei Ly=b:")
+        write_array_in_file(x, n, "Solutia sistemului Ax=b: ")
+    else:
+        print("Solutia ecuatiei Ly=b:")
+        write_array_in_console(y, n)
+        print("Solutia sistemului Ax=b: ")
+        write_array_in_console(x, n)
     return x
 
 
@@ -182,26 +252,39 @@ def inverse_matrix(a, epsilon):
 
 
 if __name__ == '__main__':
-    # n, epsilon, a, b = read_data_from_file("data.txt")
-    # n, epsilon, a, b = read_data_from_console()
-    n, epsilon, a, b = generate_random_matrix()
+    in_file = True
+    from_file = False
+    read_file = "in_data.txt"
+    write_file = "out_data.txt"
+    generate = True
+    if os.path.exists(write_file):
+        os.remove(write_file)
+    if from_file:
+        n, epsilon, a, b = read_data_from_file()
+    elif generate:
+        n, epsilon, a, b = generate_random_matrix()
+    else:
+        n, epsilon, a, b = read_data_from_console()
     a_np = np.array(a)
     d = [a[i][i] for i in range(n)]  # diagonala initiala
     cholesky_decomposition(a, n, epsilon)
-    print("Determinant A: ", determinant(a))
-    # b = [16, 27, 41]
     b_np = np.array(b)
     x = solve_eq(a, b, epsilon)
-    print("Solutia sistemului Ax=b: ", x)
-    print("Norma euclidiana:", norm(a, x, d, b))
-
-    L_np = np.linalg.cholesky(a_np)
-    print("Descompunere Cholesky numpy:\n", L_np)
-    x_np = np.linalg.solve(a_np, b_np)
-    print("Solutia sistemului Ax=b calculat de numpy: ", x_np)
-
     a_inverse = inverse_matrix(a, epsilon)
     a_inverse_np = np.linalg.inv(a_np)
-    print("Inversa matricei A:", a_inverse)
-    print("Inversa matricei A cu numpy:\n", a_inverse_np)
-    print(np.linalg.norm(a_inverse - a_inverse_np, ord="fro"))
+    L_np = np.linalg.cholesky(a_np)
+    x_np = np.linalg.solve(a_np, b_np)
+    norma = norm(a, x, d, b)
+    if not in_file:
+        print("Determinant A: ", determinant(a))
+        print("Norma euclidiana:", norma)
+        print("Descompunere Cholesky numpy:\n", L_np)
+        print("Solutia sistemului Ax=b calculat de numpy: ", x_np)
+        print("Inversa matricei A:", a_inverse)
+        print("Inversa matricei A cu numpy:\n", a_inverse_np)
+        print("Norma pentru inversa: ", np.linalg.norm(a_inverse - a_inverse_np, ord="fro"))
+    else:
+        write_value_in_file(determinant(a), "Determinant A:")
+        write_value_in_file(norma, "Norma euclidiana:")
+        write_matrix_in_file(a_inverse,n, "Inversa matricei A:")
+        write_value_in_file(np.linalg.norm(a_inverse - a_inverse_np, ord="fro"), "Norma pentru inversa: ")
